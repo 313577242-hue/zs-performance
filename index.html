@@ -428,16 +428,56 @@
 <!-- Backup Modal -->
 <div class="modal-overlay" id="backupModal">
   <div class="modal">
-    <div class="modal-title">数据备份与恢复</div>
-    <div style="text-align:center;font-size:13px;color:var(--sub);margin-bottom:16px;">
-      数据存在浏览器本地，换手机或清除缓存会丢失<br>建议定期导出备份到手机文件
+    <div class="modal-title">数据备份与同步</div>
+
+    <!-- 本地备份 -->
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:8px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;">本地备份</div>
+      <div class="modal-btns">
+        <button class="modal-btn confirm" onclick="exportData()">&#128229; 导出备份</button>
+        <button class="modal-btn" style="background:#f0f0f0;color:var(--text)" onclick="document.getElementById('importFile').click()">&#128228; 导入恢复</button>
+      </div>
     </div>
-    <div class="modal-btns">
-      <button class="modal-btn confirm" onclick="exportData()">&#128229; 导出备份</button>
-      <button class="modal-btn" style="background:#f0f0f0;color:var(--text)" onclick="document.getElementById('importFile').click()">&#128228; 导入恢复</button>
+
+    <!-- 云端同步 -->
+    <div style="padding:10px 0">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;">云端同步（GitHub）</div>
+      <div id="cloudStatus" style="font-size:12px;color:var(--sub);text-align:center;margin-bottom:8px;"></div>
+      <div class="modal-btns">
+        <button class="modal-btn confirm" onclick="cloudUpload()" id="btnCloudUp">&#9729; 上传到云端</button>
+        <button class="modal-btn" style="background:#f0f0f0;color:var(--text)" onclick="cloudDownload()" id="btnCloudDown">&#9729; 从云端同步</button>
+      </div>
+      <div id="cloudMsg" style="font-size:12px;color:var(--green);text-align:center;margin-top:8px;display:none;"></div>
+      <div style="margin-top:10px;text-align:center;">
+        <a href="javascript:void(0)" onclick="showCloudConfig()" style="font-size:12px;color:var(--sub);">云端配置</a>
+      </div>
     </div>
+
     <div class="modal-btns" style="margin-top:10px">
       <button class="modal-btn cancel" onclick="closeModal('backupModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Config Modal -->
+<div class="modal-overlay" id="cloudConfigModal">
+  <div class="modal">
+    <div class="modal-title">云端同步配置</div>
+    <div class="modal-group">
+      <label>GitHub Token</label>
+      <input type="password" class="modal-input" id="cfgToken" placeholder="ghp_...">
+    </div>
+    <div class="modal-group">
+      <label>GitHub 用户名</label>
+      <input type="text" class="modal-input" id="cfgOwner" placeholder="GitHub 用户名">
+    </div>
+    <div class="modal-group">
+      <label>仓库名</label>
+      <input type="text" class="modal-input" id="cfgRepo" placeholder="zs-performance">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('cloudConfigModal')">取消</button>
+      <button class="modal-btn confirm" onclick="saveCloudConfig()">保存配置</button>
     </div>
   </div>
 </div>
@@ -1045,10 +1085,42 @@ document.getElementById('newAgentName').addEventListener('keydown', function(e) 
   if (e.key === 'Enter') addAgent();
 });
 
-<!-- ===== Backup ===== -->
+<!-- ===== Backup & Cloud Sync ===== -->
+var CLOUD_CFG_KEY = 'zs_cloud_cfg';
+var DATA_FILE = 'data.json';
+
+function getCloudCfg() {
+  try {
+    var raw = localStorage.getItem(CLOUD_CFG_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveCloudCfgLocal(cfg) {
+  localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cfg));
+}
+
+function getApiUrl() {
+  var cfg = getCloudCfg();
+  if (!cfg.owner || !cfg.repo) return null;
+  return 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + DATA_FILE;
+}
+
 window.openBackupModal = function() {
+  updateCloudStatus();
   document.getElementById('backupModal').classList.add('show');
 };
+
+function updateCloudStatus() {
+  var cfg = getCloudCfg();
+  var status = document.getElementById('cloudStatus');
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    status.textContent = '未配置云端同步，请点击下方"云端配置"';
+  } else {
+    var lastSync = cfg.lastSync || '';
+    status.textContent = lastSync ? '上次同步：' + lastSync : '已配置，等待首次同步';
+  }
+}
 
 window.exportData = function() {
   var payload = {
@@ -1090,6 +1162,142 @@ window.importData = function(input) {
     input.value = '';
   };
   reader.readAsText(file);
+};
+
+// ===== Cloud Config =====
+window.showCloudConfig = function() {
+  var cfg = getCloudCfg();
+  document.getElementById('cfgToken').value = cfg.token || '';
+  document.getElementById('cfgOwner').value = cfg.owner || '';
+  document.getElementById('cfgRepo').value = cfg.repo || '';
+  document.getElementById('cloudConfigModal').classList.add('show');
+};
+
+window.saveCloudConfig = function() {
+  var cfg = {
+    token: document.getElementById('cfgToken').value.trim(),
+    owner: document.getElementById('cfgOwner').value.trim(),
+    repo: document.getElementById('cfgRepo').value.trim(),
+    lastSync: getCloudCfg().lastSync || ''
+  };
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    showToast('请填写完整配置');
+    return;
+  }
+  saveCloudCfgLocal(cfg);
+  closeModal('cloudConfigModal');
+  updateCloudStatus();
+  showToast('云端配置已保存');
+};
+
+// ===== Cloud Upload =====
+window.cloudUpload = function() {
+  var cfg = getCloudCfg();
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    showToast('请先配置云端信息');
+    showCloudConfig();
+    return;
+  }
+
+  var btn = document.getElementById('btnCloudUp');
+  btn.textContent = '上传中...';
+  btn.disabled = true;
+
+  var payload = JSON.stringify({
+    version: 2,
+    syncedAt: new Date().toISOString(),
+    agents: data.agents,
+    records: data.records
+  });
+
+  var b64 = btoa(unescape(encodeURIComponent(payload)));
+  var url = getApiUrl();
+
+  // Check if file exists first
+  fetch(url, { headers: { 'Authorization': 'token ' + cfg.token } }).then(function(r) {
+    var body = {
+      message: 'Sync data ' + new Date().toLocaleString('zh-CN'),
+      content: b64,
+      branch: 'master'
+    };
+    if (r.ok) {
+      return r.json().then(function(d) { body.sha = d.sha; });
+    }
+    return Promise.resolve();
+  }).then(function() {
+    return fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + cfg.token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+  }).then(function(r) {
+    btn.textContent = '\u2601 上传到云端';
+    btn.disabled = false;
+    if (r.ok) {
+      var ts = new Date().toLocaleString('zh-CN');
+      cfg.lastSync = ts;
+      saveCloudCfgLocal(cfg);
+      updateCloudStatus();
+      showToast('已同步到云端');
+      closeModal('backupModal');
+    } else {
+      return r.json().then(function(d) {
+        showToast('上传失败: ' + (d.message || 'Network error'));
+      });
+    }
+  }).catch(function(err) {
+    btn.textContent = '\u2601 上传到云端';
+    btn.disabled = false;
+    showToast('上传失败: ' + err.message);
+  });
+};
+
+// ===== Cloud Download =====
+window.cloudDownload = function() {
+  var cfg = getCloudCfg();
+  if (!cfg.token || !cfg.owner || !cfg.repo) {
+    showToast('请先配置云端信息');
+    showCloudConfig();
+    return;
+  }
+
+  var btn = document.getElementById('btnCloudDown');
+  btn.textContent = '下载中...';
+  btn.disabled = true;
+
+  fetch(getApiUrl(), { headers: { 'Authorization': 'token ' + cfg.token } })
+    .then(function(r) {
+      if (!r.ok) { showToast('云端暂无数据'); btn.textContent = '\u2601 从云端同步'; btn.disabled = false; return; }
+      return r.json();
+    })
+    .then(function(d) {
+      if (!d || !d.content) { showToast('云端暂无数据'); btn.textContent = '\u2601 从云端同步'; btn.disabled = false; return; }
+      var decoded = decodeURIComponent(escape(atob(d.content.replace(/\s/g, ''))));
+      var payload = JSON.parse(decoded);
+      if (!payload.agents || !payload.records) throw new Error('Data format error');
+
+      data.agents = payload.agents;
+      data.records = payload.records;
+      saveData(data);
+
+      var ts = new Date().toLocaleString('zh-CN');
+      cfg.lastSync = ts;
+      saveCloudCfgLocal(cfg);
+      updateCloudStatus();
+      btn.textContent = '\u2601 从云端同步';
+      btn.disabled = false;
+      showToast('云端同步成功，共 ' + data.agents.length + ' 人，' + data.records.length + ' 笔');
+      closeModal('backupModal');
+      render();
+    })
+    .catch(function(err) {
+      btn.textContent = '\u2601 从云端同步';
+      btn.disabled = false;
+      showToast('同步失败: ' + err.message);
+    });
 };
 
 // ===== Init =====
