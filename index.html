@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>业绩统计 - 住商不动产</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --green: #07c160;
+    --green-dark: #06ad56;
+    --green-light: #e8f8ee;
+    --text: #1a1a1a;
+    --sub: #888;
+    --light: #bbb;
+    --border: #eee;
+    --white: #fff;
+    --red: #fa5151;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #e0e0e0;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .app-frame {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    border: 3px solid var(--green);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #f5f5f5;
+    box-shadow: 0 4px 24px rgba(7,193,96,0.15);
+    position: relative;
+    padding-bottom: 70px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    color: #fff;
+    padding: 18px 20px 22px;
+    text-align: center;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+  .header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 4px; letter-spacing: 1px; }
+  .header .date-now { font-size: 12px; opacity: 0.7; margin-top: 6px; }
+
+  /* Tabs */
+  .tabs { display: flex; background: var(--white); box-shadow: var(--shadow); }
+  .tab {
+    flex: 1; text-align: center; padding: 14px 0; font-size: 15px;
+    color: var(--sub); font-weight: 500; cursor: pointer; transition: color .2s;
+  }
+  .tab.active { color: var(--green); font-weight: 700; }
+  .tab.active::after {
+    content: ''; display: block; width: 30px; height: 3px; background: var(--green);
+    border-radius: 2px; margin: 4px auto 0;
+  }
+
+  /* Content */
+  .content { padding: 12px; }
+
+  /* Summary Card */
+  .summary-card {
+    background: var(--white); border-radius: 14px; padding: 18px 16px;
+    box-shadow: var(--shadow); margin-bottom: 12px;
+  }
+  .summary-card .label { font-size: 13px; color: var(--sub); margin-bottom: 6px; }
+  .summary-card .amount { font-size: 32px; font-weight: 700; color: var(--green); }
+  .summary-card .amount::before { content: '\A5'; font-size: 18px; font-weight: 400; margin-right: 2px; }
+  .summary-card .meta { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .summary-card .meta-item { font-size: 13px; color: var(--sub); }
+  .summary-card .meta-item b { font-weight: 600; color: var(--text); margin-left: 4px; }
+  .summary-card .meta-item b.green { color: var(--green); }
+
+  /* Section Title */
+  .section-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 16px 4px 10px;
+  }
+  .section-title span:first-child { font-size: 15px; font-weight: 600; }
+  .section-title .count { font-size: 12px; color: var(--light); }
+
+  /* Record Item */
+  .record-item {
+    background: var(--white); border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 8px; box-shadow: var(--shadow);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .record-item .left { flex: 1; min-width: 0; }
+  .record-item .agent-name { font-size: 15px; font-weight: 600; }
+  .record-item .record-meta { font-size: 12px; color: var(--light); margin-top: 3px; }
+  .record-item .amount-display { font-size: 17px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .record-item .amount-display::before { content: '\A5'; font-size: 12px; font-weight: 400; }
+  .record-item .del-btn {
+    width: 28px; height: 28px; border: none; background: transparent;
+    color: var(--light); font-size: 18px; cursor: pointer; margin-left: 8px; flex-shrink: 0;
+  }
+  .cat-tag {
+    display: inline-block; font-size: 11px; color: var(--green);
+    background: var(--green-light); border-radius: 4px; padding: 2px 6px; margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* Ranking Item */
+  .rank-item {
+    background: var(--white); border-radius: 12px; padding: 12px 16px;
+    margin-bottom: 8px; box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .rank-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+    background: var(--green-light); color: var(--green);
+  }
+  .rank-num.n1 { background: #fef3e2; color: #f5a623; }
+  .rank-num.n2 { background: #f0f0f0; color: #999; }
+  .rank-num.n3 { background: #fce8d8; color: #d4772b; }
+  .rank-info { flex: 1; min-width: 0; cursor: pointer; }
+  .rank-name { font-size: 15px; font-weight: 600; color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+  .rank-count { font-size: 12px; color: var(--light); margin-top: 2px; }
+  .rank-amount { font-size: 16px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .rank-amount::before { content: '\A5'; font-size: 11px; font-weight: 400; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 50px 20px; color: var(--light); }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty .text { font-size: 14px; }
+
+  /* Date Bar */
+  .date-bar {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    background: var(--white); border-radius: 12px; padding: 10px 16px;
+    margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .date-bar .arrow {
+    width: 30px; height: 30px; border: none; background: var(--green-light);
+    border-radius: 50%; color: var(--green); font-size: 14px; cursor: pointer;
+  }
+  .date-bar .date-text { font-size: 16px; font-weight: 600; min-width: 140px; text-align: center; }
+
+  /* Bottom Bar */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px; display: flex; gap: 10px;
+    padding: 10px 12px; background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px); border-top: 1px solid var(--border); z-index: 100;
+  }
+  .btn {
+    flex: 1; border: none; border-radius: 10px; padding: 13px 0;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-secondary { background: var(--green-light); color: var(--green); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; width: 100%; max-width: 430px;
+    border-radius: 20px 20px 0 0; padding: 20px 20px 30px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 20px; }
+  .modal-group { margin-bottom: 16px; }
+  .modal-group label { font-size: 13px; color: var(--sub); display: block; margin-bottom: 6px; }
+  .modal-input {
+    width: 100%; border: 2px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 16px; outline: none; transition: border-color .2s;
+  }
+  .modal-input:focus { border-color: var(--green); }
+  .modal-select {
+    width: 100%; border: 2px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 16px; background: #fff; outline: none;
+    appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  .modal-select:focus { border-color: var(--green); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btn {
+    flex: 1; border: none; border-radius: 10px; padding: 13px 0;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .modal-btn.cancel { background: #f5f5f5; color: var(--sub); }
+  .modal-btn.confirm { background: var(--green); color: #fff; }
+
+  /* Agent List */
+  .agent-list { margin-bottom: 10px; min-height: 20px; }
+  .agent-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--green-light); border-radius: 20px; padding: 6px 12px;
+    margin: 4px; font-size: 14px; color: var(--green-dark);
+  }
+  .agent-chip .remove {
+    width: 18px; height: 18px; border: none; background: var(--green);
+    color: #fff; border-radius: 50%; font-size: 12px; cursor: pointer;
+    line-height: 1;
+  }
+
+  /* Password Modal */
+  .pwd-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 250;
+    display: none; align-items: center; justify-content: center;
+  }
+  .pwd-overlay.show { display: flex; }
+  .pwd-box {
+    background: #fff; border-radius: 16px; padding: 24px 20px;
+    width: 280px; max-width: 90%; text-align: center;
+  }
+  .pwd-box .pwd-icon { font-size: 36px; margin-bottom: 10px; }
+  .pwd-box .pwd-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .pwd-box .pwd-desc { font-size: 13px; color: var(--sub); margin-bottom: 16px; }
+  .pwd-box .pwd-input {
+    width: 100%; border: 2px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; font-size: 16px; text-align: center; outline: none; margin-bottom: 14px;
+  }
+  .pwd-box .pwd-input:focus { border-color: var(--green); }
+  .pwd-box .pwd-btns { display: flex; gap: 10px; }
+  .pwd-box .pwd-btn {
+    flex: 1; border: none; border-radius: 10px; padding: 12px 0;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .pwd-box .pwd-btn.cancel { background: #f5f5f5; color: var(--sub); }
+  .pwd-box .pwd-btn.confirm { background: var(--green); color: #fff; }
+  .pwd-box .pwd-error { font-size: 12px; color: var(--red); margin-bottom: 8px; display: none; }
+  .pwd-box .pwd-error.show { display: block; }
+  .pwd-box .pwd-hint { font-size: 12px; color: var(--light); margin-top: 8px; }
+
+  /* Detail Modal */
+  .detail-list { max-height: 55vh; overflow-y: auto; }
+  .detail-item {
+    background: #f9f9f9; border-radius: 10px; padding: 12px 14px;
+    margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .detail-item .d-left { flex: 1; min-width: 0; }
+  .detail-item .d-name { font-size: 14px; font-weight: 600; }
+  .detail-item .d-meta { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .detail-item .d-amount { font-size: 15px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .detail-item .d-amount::before { content: '\A5'; font-size: 11px; font-weight: 400; }
+  .detail-item .d-actions { display: flex; gap: 6px; margin-left: 8px; flex-shrink: 0; }
+  .d-btn {
+    width: 30px; height: 30px; border: none; border-radius: 6px;
+    font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .d-btn.edit { background: var(--green-light); color: var(--green); }
+  .d-btn.del { background: #fef0f0; color: var(--red); }
+
+  .detail-summary {
+    text-align: center; padding: 12px 0; margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-summary .ds-name { font-size: 18px; font-weight: 700; }
+  .detail-summary .ds-total { font-size: 24px; font-weight: 700; color: var(--green); margin-top: 4px; }
+  .detail-summary .ds-total::before { content: '\A5'; font-size: 15px; font-weight: 400; }
+  .detail-summary .ds-count { font-size: 13px; color: var(--sub); margin-top: 2px; }
+  .toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px;
+    border-radius: 10px; font-size: 14px; z-index: 300; display: none;
+  }
+  .toast.show { display: block; }
+
+  /* Header backup button */
+  .header-backup {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 22px; cursor: pointer; opacity: 0.8; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+  .header-backup:active { opacity: 0.5; }
+
+  #importFile { display: none; }
+</style>
+</head>
+<body>
+<div class="app-frame">
+
+<!-- Header -->
+<div class="header">
+  <span class="header-backup" onclick="requireAuth(openBackupModal)" title="备份与恢复">&#9881;</span>
+  <h1>住商不动产</h1>
+  <div class="subtitle">云樾东方店</div>
+  <div class="date-now" id="dateNow"></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="day">日统计</div>
+  <div class="tab" data-tab="month">月统计</div>
+  <div class="tab" data-tab="year">年排行</div>
+</div>
+
+<!-- Content -->
+<div class="content" id="content"></div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <button class="btn btn-secondary" onclick="requireAuth(openAgentModal)">经纪人管理</button>
+  <button class="btn btn-primary" onclick="requireAuth(openRecordModal)">+ 添加业绩</button>
+</div>
+
+<!-- Password Modal -->
+<div class="pwd-overlay" id="pwdModal">
+  <div class="pwd-box">
+    <div class="pwd-icon">&#128274;</div>
+    <div class="pwd-title" id="pwdTitle">管理员验证</div>
+    <div class="pwd-desc" id="pwdDesc">请输入管理员密码</div>
+    <div class="pwd-error" id="pwdError">密码错误</div>
+    <input type="password" class="pwd-input" id="pwdInput" placeholder="输入密码" maxlength="20">
+    <div class="pwd-btns">
+      <button class="pwd-btn cancel" onclick="closePwdModal()">取消</button>
+      <button class="pwd-btn confirm" onclick="verifyPwd()">确认</button>
+    </div>
+    <div class="pwd-hint" id="pwdHint"></div>
+  </div>
+</div>
+
+<!-- Record Modal -->
+<div class="modal-overlay" id="recordModal">
+  <div class="modal">
+    <div class="modal-title">添加业绩</div>
+    <div class="modal-group">
+      <label>选择经纪人</label>
+      <select class="modal-select" id="recordAgent"><option value="">请选择经纪人</option></select>
+    </div>
+    <div class="modal-group">
+      <label>业绩类型</label>
+      <select class="modal-select" id="recordCategory">
+        <option value="">请选择类型</option>
+        <option value="租赁">租赁</option>
+        <option value="房源">房源</option>
+        <option value="买卖">买卖</option>
+        <option value="新房">新房</option>
+      </select>
+    </div>
+    <div class="modal-group">
+      <label>业绩金额（元）</label>
+      <input type="number" class="modal-input" id="recordAmount" placeholder="请输入金额" step="0.01">
+    </div>
+    <div class="modal-group">
+      <label>日期</label>
+      <input type="date" class="modal-input" id="recordDate">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('recordModal')">取消</button>
+      <button class="modal-btn confirm" onclick="saveRecord()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Modal -->
+<div class="modal-overlay" id="agentModal">
+  <div class="modal">
+    <div class="modal-title">经纪人管理</div>
+    <div class="modal-group">
+      <label>当前经纪人</label>
+      <div class="agent-list" id="agentList"></div>
+    </div>
+    <div class="modal-group">
+      <label>添加新经纪人</label>
+      <input type="text" class="modal-input" id="newAgentName" placeholder="输入姓名后点确认" maxlength="20">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('agentModal')">关闭</button>
+      <button class="modal-btn confirm" onclick="addAgent()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="detail-summary">
+      <div class="ds-name" id="detailAgentName"></div>
+      <div class="ds-total" id="detailTotal"></div>
+      <div class="ds-count" id="detailCount"></div>
+    </div>
+    <div class="detail-list" id="detailList"></div>
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="modal-btn cancel" onclick="closeModal('detailModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal (reuses record modal structure for editing) -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">修改业绩</div>
+    <div class="modal-group">
+      <label>业绩类型</label>
+      <select class="modal-select" id="editCategory">
+        <option value="租赁">租赁</option>
+        <option value="房源">房源</option>
+        <option value="买卖">买卖</option>
+        <option value="新房">新房</option>
+      </select>
+    </div>
+    <div class="modal-group">
+      <label>业绩金额（元）</label>
+      <input type="number" class="modal-input" id="editAmount" placeholder="请输入金额" step="0.01">
+    </div>
+    <div class="modal-group">
+      <label>日期</label>
+      <input type="date" class="modal-input" id="editDate">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('editModal')">取消</button>
+      <button class="modal-btn confirm" onclick="saveEditRecord()">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- Backup Modal -->
+<div class="modal-overlay" id="backupModal">
+  <div class="modal">
+    <div class="modal-title">数据备份与恢复</div>
+    <div style="text-align:center;font-size:13px;color:var(--sub);margin-bottom:16px;">
+      数据存在浏览器本地，换手机或清除缓存会丢失<br>建议定期导出备份到手机文件
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn confirm" onclick="exportData()">&#128229; 导出备份</button>
+      <button class="modal-btn" style="background:#f0f0f0;color:var(--text)" onclick="document.getElementById('importFile').click()">&#128228; 导入恢复</button>
+    </div>
+    <div class="modal-btns" style="margin-top:10px">
+      <button class="modal-btn cancel" onclick="closeModal('backupModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json" onchange="importData(this)">
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+</div><!-- app-frame -->
+
+<script>
+(function() {
+'use strict';
+
+// ===== Storage =====
+var STORE_KEY = 'zs_perf_v2';
+var PWD_KEY = 'zs_admin_pwd_v2';
+
+function loadData() {
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { agents: [], records: [] };
+}
+
+function saveData(d) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(d));
+}
+
+var data = loadData();
+var currentTab = 'day';
+var currentDate = new Date();
+
+// ===== Password =====
+function simpleHash(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  return 'h_' + h;
+}
+
+var pendingAction = null;
+var AUTH_EXPIRE = 5 * 60 * 1000; // 5 minutes
+var AUTH_KEY = 'zs_auth_ts';
+
+function isAuthed() {
+  var ts = sessionStorage.getItem(AUTH_KEY);
+  if (!ts) return false;
+  return (Date.now() - parseInt(ts)) < AUTH_EXPIRE;
+}
+
+function setAuthTs() {
+  sessionStorage.setItem(AUTH_KEY, Date.now().toString());
+}
+
+window.requireAuth = function(fn) {
+  var stored = localStorage.getItem(PWD_KEY);
+  if (!stored) {
+    pendingAction = fn;
+    showPwdModal('设置管理员密码', '首次使用需设置管理员密码', true);
+    return;
+  }
+  if (isAuthed()) {
+    fn();
+    return;
+  }
+  pendingAction = fn;
+  showPwdModal('管理员验证', '请输入管理员密码', false);
+};
+
+function showPwdModal(title, desc, isSet) {
+  document.getElementById('pwdTitle').textContent = title;
+  document.getElementById('pwdDesc').textContent = desc;
+  document.getElementById('pwdError').className = 'pwd-error';
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdInput').type = isSet ? 'text' : 'password';
+  document.getElementById('pwdHint').textContent = isSet ? '请牢记此密码，遗失后无法恢复' : '';
+  document.getElementById('pwdModal').classList.add('show');
+  setTimeout(function() { document.getElementById('pwdInput').focus(); }, 150);
+}
+
+window.closePwdModal = function() {
+  document.getElementById('pwdModal').classList.remove('show');
+  pendingAction = null;
+};
+
+window.verifyPwd = function() {
+  var input = document.getElementById('pwdInput').value.trim();
+  if (!input) {
+    var err = document.getElementById('pwdError');
+    err.textContent = '请输入密码';
+    err.className = 'pwd-error show';
+    return;
+  }
+
+  var actionToRun = pendingAction;
+
+  var stored = localStorage.getItem(PWD_KEY);
+  if (!stored) {
+    localStorage.setItem(PWD_KEY, simpleHash(input));
+    closePwdModal();
+    showToast('密码设置成功');
+    setAuthTs();
+    if (actionToRun) { actionToRun(); }
+    return;
+  }
+
+  if (simpleHash(input) === stored) {
+    closePwdModal();
+    setAuthTs();
+    if (actionToRun) { actionToRun(); }
+  } else {
+    var err2 = document.getElementById('pwdError');
+    err2.textContent = '密码错误，请重试';
+    err2.className = 'pwd-error show';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+  }
+};
+
+// ===== Toast =====
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.className = 'toast'; }, 1800);
+}
+
+// ===== Utils =====
+function fmtDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function fmtMoney(n) {
+  return Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function isSameMonth(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function isSameYear(a, b) {
+  return a.getFullYear() === b.getFullYear();
+}
+
+function getCatBreakdown(records) {
+  var map = {};
+  records.forEach(function(r) {
+    var c = r.category || '其他';
+    map[c] = (map[c] || 0) + r.amount;
+  });
+  var names = ['租赁', '房源', '买卖', '新房'];
+  var s = '';
+  names.forEach(function(c) {
+    if (map[c]) {
+      s += '<span class="meta-item">' + c + '<b>' + fmtMoney(map[c]) + '</b></span>';
+    }
+  });
+  return s;
+}
+
+// ===== Date Display =====
+function updateDateNow() {
+  var now = new Date();
+  var w = ['日','一','二','三','四','五','六'][now.getDay()];
+  document.getElementById('dateNow').textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 星期' + w;
+}
+
+// ===== Render =====
+function render() {
+  var c = document.getElementById('content');
+  if (currentTab === 'day') renderDay(c);
+  else if (currentTab === 'month') renderMonth(c);
+  else renderYear(c);
+}
+
+function renderDay(c) {
+  var records = data.records.filter(function(r) {
+    return isSameDay(new Date(r.date), currentDate);
+  });
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  var catBreakdown = getCatBreakdown(records);
+
+  var html = '';
+  html += '<div class="date-bar">';
+  html += '<button class="arrow" onclick="shiftDate(-1)">&#9664;</button>';
+  html += '<span class="date-text">' + fmtDate(currentDate) + '</span>';
+  html += '<button class="arrow" onclick="shiftDate(1)">&#9654;</button>';
+  html += '</div>';
+
+  html += '<div class="summary-card">';
+  html += '<div class="label">当日业绩总额</div>';
+  html += '<div class="amount">' + fmtMoney(total) + '</div>';
+  html += '<div class="meta">';
+  html += '<span class="meta-item">笔数<b class="green">' + records.length + '</b></span>';
+  html += '<span class="meta-item">经纪人数<b>' + new Set(records.map(function(r){return r.agent;})).size + '</b></span>';
+  if (catBreakdown) html += catBreakdown;
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="section-title"><span>明细记录</span><span class="count">' + records.length + ' 笔</span></div>';
+
+  if (records.length === 0) {
+    html += '<div class="empty"><div class="icon">&#128203;</div><div class="text">当日暂无业绩记录</div></div>';
+  } else {
+    records.sort(function(a, b) { return b.createdAt - a.createdAt; });
+    records.forEach(function(r) {
+      var t = new Date(r.createdAt);
+      var ts = String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+      var tag = r.category ? '<span class="cat-tag">' + r.category + '</span>' : '';
+      html += '<div class="record-item">';
+      html += '<div class="left">';
+      html += '<div class="agent-name">' + r.agent + tag + '</div>';
+      html += '<div class="record-meta">' + ts + ' 录入</div>';
+      html += '</div>';
+      html += '<div class="amount-display">' + fmtMoney(r.amount) + '</div>';
+      html += '<button class="del-btn" onclick="requireAuth(function(){deleteRecord(\'' + r.id + '\')})">&#10005;</button>';
+      html += '</div>';
+    });
+  }
+  c.innerHTML = html;
+}
+
+function renderMonth(c) {
+  var records = data.records.filter(function(r) {
+    return isSameMonth(new Date(r.date), currentDate);
+  });
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  var catBreakdown = getCatBreakdown(records);
+
+  var agentMap = {};
+  records.forEach(function(r) {
+    if (!agentMap[r.agent]) agentMap[r.agent] = { total: 0, count: 0 };
+    agentMap[r.agent].total += r.amount;
+    agentMap[r.agent].count++;
+  });
+  var agentList = Object.keys(agentMap).sort(function(a,b) { return agentMap[b].total - agentMap[a].total; });
+
+  var html = '';
+  html += '<div class="date-bar">';
+  html += '<button class="arrow" onclick="shiftMonth(-1)">&#9664;</button>';
+  html += '<span class="date-text">' + currentDate.getFullYear() + '年' + (currentDate.getMonth()+1) + '月</span>';
+  html += '<button class="arrow" onclick="shiftMonth(1)">&#9654;</button>';
+  html += '</div>';
+
+  html += '<div class="summary-card">';
+  html += '<div class="label">当月业绩总额</div>';
+  html += '<div class="amount">' + fmtMoney(total) + '</div>';
+  html += '<div class="meta">';
+  html += '<span class="meta-item">笔数<b class="green">' + records.length + '</b></span>';
+  html += '<span class="meta-item">活跃经纪人<b>' + agentList.length + '</b></span>';
+  if (catBreakdown) html += catBreakdown;
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="section-title"><span>经纪人月度统计</span><span class="count">' + agentList.length + ' 人</span></div>';
+
+  if (agentList.length === 0) {
+    html += '<div class="empty"><div class="icon">&#128202;</div><div class="text">当月暂无业绩记录</div></div>';
+  } else {
+    var medals = ['&#129351;','&#129352;','&#129353;'];
+    agentList.forEach(function(name, i) {
+      var info = agentMap[name];
+      var nc = '';
+      if (i === 0) nc = 'n1';
+      else if (i === 1) nc = 'n2';
+      else if (i === 2) nc = 'n3';
+      html += '<div class="rank-item">';
+      html += '<div class="rank-num ' + nc + '">' + (i+1) + '</div>';
+      html += '<div class="rank-info" onclick="openDetailModal(\'' + currentDate.getFullYear() + '\',\'' + (currentDate.getMonth()+1) + '\',\'' + name + '\')"><div class="rank-name">' + name + (i<3?' '+medals[i]:'') + '</div><div class="rank-count">' + info.count + ' 笔</div></div>';
+      html += '<div class="rank-amount">' + fmtMoney(info.total) + '</div>';
+      html += '</div>';
+    });
+  }
+  c.innerHTML = html;
+}
+
+function renderYear(c) {
+  var records = data.records.filter(function(r) {
+    return isSameYear(new Date(r.date), currentDate);
+  });
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  var catBreakdown = getCatBreakdown(records);
+
+  var today = new Date();
+  var isCurYear = currentDate.getFullYear() === today.getFullYear();
+  var doy = isCurYear ? Math.floor((today - new Date(today.getFullYear(),0,1)) / 86400000) + 1 : 365;
+
+  var agentMap = {};
+  records.forEach(function(r) {
+    if (!agentMap[r.agent]) agentMap[r.agent] = { total: 0, count: 0 };
+    agentMap[r.agent].total += r.amount;
+    agentMap[r.agent].count++;
+  });
+  var agentList = Object.keys(agentMap).sort(function(a,b) { return agentMap[b].total - agentMap[a].total; });
+
+  var html = '';
+  html += '<div class="date-bar">';
+  html += '<button class="arrow" onclick="shiftYear(-1)">&#9664;</button>';
+  html += '<span class="date-text">' + currentDate.getFullYear() + '年度</span>';
+  html += '<button class="arrow" onclick="shiftYear(1)">&#9654;</button>';
+  html += '</div>';
+
+  html += '<div class="summary-card">';
+  html += '<div class="label">年度业绩总额（1月1日 - 12月31日）</div>';
+  html += '<div class="amount">' + fmtMoney(total) + '</div>';
+  html += '<div class="meta">';
+  html += '<span class="meta-item">总笔数<b class="green">' + records.length + '</b></span>';
+  html += '<span class="meta-item">经纪人数<b>' + agentList.length + '</b></span>';
+  if (isCurYear) html += '<span class="meta-item">日均<b>' + (total > 0 ? fmtMoney(total/doy) : '0.00') + '</b></span>';
+  if (catBreakdown) html += catBreakdown;
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="section-title"><span>年度排行榜</span><span class="count">统计周期：1.1 - 12.31</span></div>';
+
+  if (agentList.length === 0) {
+    html += '<div class="empty"><div class="icon">&#127942;</div><div class="text">本年度暂无业绩记录</div></div>';
+  } else {
+    var medals = ['&#129351;','&#129352;','&#129353;'];
+    agentList.forEach(function(name, i) {
+      var info = agentMap[name];
+      var nc = '';
+      if (i === 0) nc = 'n1';
+      else if (i === 1) nc = 'n2';
+      else if (i === 2) nc = 'n3';
+      html += '<div class="rank-item">';
+      html += '<div class="rank-num ' + nc + '">' + (i+1) + '</div>';
+      html += '<div class="rank-info" onclick="openYearDetail(\'' + currentDate.getFullYear() + '\',\'' + name + '\')"><div class="rank-name">' + name + (i<3?' '+medals[i]:'') + '</div><div class="rank-count">' + info.count + ' 笔</div></div>';
+      html += '<div class="rank-amount">' + fmtMoney(info.total) + '</div>';
+      html += '</div>';
+    });
+  }
+  c.innerHTML = html;
+}
+
+// ===== Date Shift =====
+window.shiftDate = function(n) { currentDate.setDate(currentDate.getDate() + n); render(); };
+window.shiftMonth = function(n) { currentDate.setMonth(currentDate.getMonth() + n); render(); };
+window.shiftYear = function(n) { currentDate.setFullYear(currentDate.getFullYear() + n); render(); };
+
+// ===== Tab Switch =====
+var tabs = document.querySelectorAll('.tab');
+tabs.forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    currentDate = new Date();
+    detailPeriod = null;
+    render();
+  });
+});
+
+// Clear detail period when detail modal overlay clicked
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) { this.classList.remove('show'); detailPeriod = null; }
+});
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) { this.classList.remove('show'); editingId = null; }
+});
+
+// ===== Record Modal =====
+window.openRecordModal = function() {
+  if (data.agents.length === 0) {
+    showToast('请先添加经纪人');
+    openAgentModal();
+    return;
+  }
+  var sel = document.getElementById('recordAgent');
+  sel.innerHTML = '<option value="">请选择经纪人</option>';
+  data.agents.forEach(function(a) {
+    sel.innerHTML += '<option value="' + a + '">' + a + '</option>';
+  });
+  document.getElementById('recordCategory').value = '';
+  document.getElementById('recordAmount').value = '';
+  document.getElementById('recordDate').value = fmtDate(new Date());
+  document.getElementById('recordModal').classList.add('show');
+};
+
+window.saveRecord = function() {
+  var agent = document.getElementById('recordAgent').value;
+  var category = document.getElementById('recordCategory').value;
+  var amount = parseFloat(document.getElementById('recordAmount').value);
+  var date = document.getElementById('recordDate').value;
+
+  if (!agent) { showToast('请选择经纪人'); return; }
+  if (!category) { showToast('请选择业绩类型'); return; }
+  if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+  if (!date) { showToast('请选择日期'); return; }
+
+  data.records.push({
+    id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+    agent: agent,
+    category: category,
+    amount: amount,
+    date: date,
+    createdAt: Date.now()
+  });
+  saveData(data);
+  closeModal('recordModal');
+  showToast('业绩添加成功');
+  render();
+};
+
+window.deleteRecord = function(id) {
+  data.records = data.records.filter(function(r) { return r.id !== id; });
+  saveData(data);
+  showToast('已删除');
+  render();
+  // Refresh detail modal if open
+  if (detailPeriod) refreshDetailModal();
+};
+
+// ===== Detail Modal =====
+var detailPeriod = null; // { year, month, agent } or { year, agent }
+
+window.openDetailModal = function(year, month, agent) {
+  var records = data.records.filter(function(r) {
+    var d = new Date(r.date);
+    return d.getFullYear() === parseInt(year) && d.getMonth() + 1 === parseInt(month) && r.agent === agent;
+  });
+  records.sort(function(a, b) { return b.createdAt - a.createdAt; });
+  detailPeriod = { year: parseInt(year), month: parseInt(month), agent: agent };
+
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  document.getElementById('detailAgentName').textContent = agent + ' - ' + year + '年' + month + '月';
+  document.getElementById('detailTotal').textContent = fmtMoney(total);
+  document.getElementById('detailCount').textContent = '共 ' + records.length + ' 笔';
+  buildDetailList(records);
+  document.getElementById('detailModal').classList.add('show');
+};
+
+window.openYearDetail = function(year, agent) {
+  var records = data.records.filter(function(r) {
+    var d = new Date(r.date);
+    return d.getFullYear() === parseInt(year) && r.agent === agent;
+  });
+  records.sort(function(a, b) { return b.createdAt - a.createdAt; });
+  detailPeriod = { year: parseInt(year), agent: agent };
+
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  document.getElementById('detailAgentName').textContent = agent + ' - ' + year + '年度';
+  document.getElementById('detailTotal').textContent = fmtMoney(total);
+  document.getElementById('detailCount').textContent = '共 ' + records.length + ' 笔';
+  buildDetailList(records);
+  document.getElementById('detailModal').classList.add('show');
+};
+
+function buildDetailList(records) {
+  var list = document.getElementById('detailList');
+  if (records.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="text">暂无记录</div></div>';
+    return;
+  }
+  list.innerHTML = records.map(function(r) {
+    return '<div class="detail-item">' +
+      '<div class="d-left">' +
+        '<div class="d-name">' + r.agent + '<span class="cat-tag">' + (r.category || '未分类') + '</span></div>' +
+        '<div class="d-meta">' + r.date + '</div>' +
+      '</div>' +
+      '<div class="d-amount">' + fmtMoney(r.amount) + '</div>' +
+      '<div class="d-actions">' +
+        '<button class="d-btn edit" onclick="requireAuth(function(){openEditModal(\'' + r.id + '\')})">&#9998;</button>' +
+        '<button class="d-btn del" onclick="requireAuth(function(){removeRecordDetail(\'' + r.id + '\')})">&#10005;</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function refreshDetailModal() {
+  if (!detailPeriod) return;
+  var records;
+  if (detailPeriod.month !== undefined) {
+    records = data.records.filter(function(r) {
+      var d = new Date(r.date);
+      return d.getFullYear() === detailPeriod.year && d.getMonth() + 1 === detailPeriod.month && r.agent === detailPeriod.agent;
+    });
+  } else {
+    records = data.records.filter(function(r) {
+      var d = new Date(r.date);
+      return d.getFullYear() === detailPeriod.year && r.agent === detailPeriod.agent;
+    });
+  }
+  records.sort(function(a, b) { return b.createdAt - a.createdAt; });
+  var total = records.reduce(function(s, r) { return s + r.amount; }, 0);
+  document.getElementById('detailTotal').textContent = fmtMoney(total);
+  document.getElementById('detailCount').textContent = '共 ' + records.length + ' 笔';
+  buildDetailList(records);
+}
+
+window.removeRecordDetail = function(id) {
+  data.records = data.records.filter(function(r) { return r.id !== id; });
+  saveData(data);
+  showToast('已删除');
+  refreshDetailModal();
+  render();
+};
+
+// ===== Edit Modal =====
+var editingId = null;
+
+window.openEditModal = function(id) {
+  var rec = data.records.filter(function(r) { return r.id === id; })[0];
+  if (!rec) return;
+  editingId = id;
+  document.getElementById('editCategory').value = rec.category || '';
+  document.getElementById('editAmount').value = rec.amount;
+  document.getElementById('editDate').value = rec.date;
+  document.getElementById('editModal').classList.add('show');
+};
+
+window.saveEditRecord = function() {
+  var category = document.getElementById('editCategory').value;
+  var amount = parseFloat(document.getElementById('editAmount').value);
+  var date = document.getElementById('editDate').value;
+
+  if (!amount || amount <= 0) { showToast('请输入有效金额'); return; }
+  if (!date) { showToast('请选择日期'); return; }
+
+  var rec = data.records.filter(function(r) { return r.id === editingId; })[0];
+  if (rec) {
+    rec.category = category;
+    rec.amount = amount;
+    rec.date = date;
+  }
+  saveData(data);
+  closeModal('editModal');
+  editingId = null;
+  showToast('修改成功');
+  refreshDetailModal();
+  render();
+};
+
+// ===== Agent Modal =====
+window.openAgentModal = function() {
+  renderAgentList();
+  document.getElementById('newAgentName').value = '';
+  document.getElementById('agentModal').classList.add('show');
+};
+
+function renderAgentList() {
+  var list = document.getElementById('agentList');
+  if (data.agents.length === 0) {
+    list.innerHTML = '<span style="color:#bbb;font-size:13px;">暂无经纪人，请在下方添加</span>';
+    return;
+  }
+  list.innerHTML = data.agents.map(function(a) {
+    return '<span class="agent-chip">' + a + '<button class="remove" onclick="requireAuth(function(){removeAgent(\'' + a + '\')})">&times;</button></span>';
+  }).join('');
+}
+
+window.addAgent = function() {
+  var name = document.getElementById('newAgentName').value.trim();
+  if (!name) { showToast('请输入姓名'); return; }
+  if (data.agents.indexOf(name) !== -1) { showToast('该经纪人已存在'); return; }
+  data.agents.push(name);
+  saveData(data);
+  document.getElementById('newAgentName').value = '';
+  renderAgentList();
+  showToast('已添加：' + name);
+};
+
+window.removeAgent = function(name) {
+  data.agents = data.agents.filter(function(a) { return a !== name; });
+  saveData(data);
+  renderAgentList();
+  showToast('已删除：' + name);
+};
+
+// ===== Close Modal =====
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('show');
+  if (id === 'detailModal') detailPeriod = null;
+  if (id === 'editModal') editingId = null;
+};
+
+// === Modal overlay click to close ===
+var overlays = document.querySelectorAll('.modal-overlay');
+overlays.forEach(function(o) {
+  o.addEventListener('click', function(e) {
+    if (e.target === o) o.classList.remove('show');
+  });
+});
+
+// === Password modal enter key + overlay close ===
+document.getElementById('pwdInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') verifyPwd();
+});
+document.getElementById('pwdModal').addEventListener('click', function(e) {
+  if (e.target === this) closePwdModal();
+});
+
+// === Agent modal enter key ===
+document.getElementById('newAgentName').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addAgent();
+});
+
+<!-- ===== Backup ===== -->
+window.openBackupModal = function() {
+  document.getElementById('backupModal').classList.add('show');
+};
+
+window.exportData = function() {
+  var payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    agents: data.agents,
+    records: data.records
+  };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '住商业绩备份_' + fmtDate(new Date()) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeModal('backupModal');
+  showToast('备份已下载');
+};
+
+window.importData = function(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var payload = JSON.parse(e.target.result);
+      if (!payload.agents || !payload.records) throw new Error('格式不对');
+      data.agents = payload.agents;
+      data.records = payload.records;
+      saveData(data);
+      closeModal('backupModal');
+      showToast('恢复成功，共 ' + data.agents.length + ' 人，' + data.records.length + ' 笔记录');
+      render();
+    } catch(err) {
+      showToast('文件格式不正确');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+};
+
+// ===== Init =====
+updateDateNow();
+render();
+
+})();
+</script>
+</body>
+</html>
