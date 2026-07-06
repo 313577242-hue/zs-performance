@@ -43,9 +43,8 @@
   /* Header */
   .header {
     background: linear-gradient(135deg, var(--green), var(--green-dark));
-    color: #fff;
-    padding: 18px 20px 22px;
-    text-align: center;
+    color: #fff; padding: 18px 20px 22px;
+    text-align: center; position: relative;
   }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
   .header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 4px; letter-spacing: 1px; }
@@ -277,12 +276,12 @@
 
   /* Header backup button */
   .header-backup {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    font-size: 22px; cursor: pointer; opacity: 0.8; width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center; border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.3);
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 24px; cursor: pointer; width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center; border-radius: 50%;
+    background: rgba(255,255,255,0.2); color: #fff; z-index: 10;
   }
-  .header-backup:active { opacity: 0.5; }
+  .header-backup:active { background: rgba(255,255,255,0.35); }
 
   #importFile { display: none; }
 </style>
