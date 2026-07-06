@@ -1211,16 +1211,16 @@ window.cloudUpload = function() {
 
   var b64 = btoa(unescape(encodeURIComponent(payload)));
   var url = getApiUrl();
+  var bodyData = {
+    message: 'Sync data ' + new Date().toLocaleString('zh-CN'),
+    content: b64,
+    branch: 'master'
+  };
 
-  // Check if file exists first
+  // Check if file exists first (get SHA for update)
   fetch(url, { headers: { 'Authorization': 'token ' + cfg.token } }).then(function(r) {
-    var body = {
-      message: 'Sync data ' + new Date().toLocaleString('zh-CN'),
-      content: b64,
-      branch: 'master'
-    };
     if (r.ok) {
-      return r.json().then(function(d) { body.sha = d.sha; });
+      return r.json().then(function(d) { bodyData.sha = d.sha; });
     }
     return Promise.resolve();
   }).then(function() {
@@ -1230,7 +1230,7 @@ window.cloudUpload = function() {
         'Authorization': 'token ' + cfg.token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(bodyData)
     });
   }).then(function(r) {
     btn.textContent = '\u2601 上传到云端';
